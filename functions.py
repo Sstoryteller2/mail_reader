@@ -50,6 +50,33 @@ def get_attaches(msg):
         return attaches
     else:
         return [False]
+    
+def encode_att_names(str_pl):
+    enode_name=re.findall('\=\?.*?\?\=', str_pl)        
+    if len(enode_name) == 1:            
+        decode_name=(decode_header(enode_name[0])[0][0])            
+        decode_name=decode_name.decode("utf-8")            
+        str_pl=str_pl.replace(enode_name[0], decode_name)
+    if len(enode_name) > 1:             
+        nm=''
+        for part in enode_name:                
+            decode_name=(decode_header(part)[0][0])                        
+            decode_name=decode_name.decode("utf-8")
+            nm+=decode_name            
+        str_pl=str_pl.replace(enode_name[0], nm)    
+        for c, i in enumerate(enode_name):           
+            if c > 0:                
+                str_pl=str_pl.replace(enode_name[c], "").replace("\"",'').rstrip()
+    return str_pl  
+    
+def get_attachments(payload):    
+    attachments=list()  
+    for pl in payload:
+        if 'name' in pl["Content-Type"] and pl.get_content_disposition() == 'attachment':               
+            str_pl=pl["Content-Type"]               
+            str_pl=encode_att_names(str_pl)
+            attachments.append(str_pl)  
+    return attachments
 
 
 def date_parse(msg_date):
@@ -87,20 +114,15 @@ async def send_message(bot_token, message, chat, rpl=None, prv=None):
 
 def get_letter_text(body):   
     soup = BeautifulSoup(body, 'html.parser')
-    paragraphs = soup.find_all('div')
-    print(paragraphs)
+    paragraphs = soup.find_all('div')   
     text=""
     for paragraph in paragraphs:
         text += paragraph.text + "\n"    
     return text.replace('\xa0', ' ')
 
 def get_text_from_multipart(msg):
-    payload = msg.get_payload()[0]
-    
-    print(payload["Content-Type"])
-    
+    payload = msg.get_payload()[0]        
     if "text/plain" in payload["Content-Type"]:
-        print('i')
         letter_text = (
             (base64.b64decode(payload.get_payload()).decode())
             .lstrip()
@@ -116,7 +138,6 @@ def get_text_from_multipart(msg):
             .rstrip()
         )        
         letter_text=get_letter_text(letter_text)
-        print(letter_text)
         return letter_text
         
     if "multipart" in payload["Content-Type"]:#if msg.is_multipart()
@@ -131,7 +152,10 @@ def get_text_from_multipart(msg):
         )
         return letter_text
 
-def post_construct(msg_subj, msg_from, msg_email, letter_text, att_files):
+def post_construct(msg_subj, msg_from, msg_email, letter_text, attachments):
+    att_txt=""
+    for atts in attachments:
+        att_txt+=(atts.strip()+"\n")
     txt = ""
     txt += (
         "<b>"
@@ -143,8 +167,10 @@ def post_construct(msg_subj, msg_from, msg_email, letter_text, att_files):
         + msg_email
         + "\n"
         + letter_text
-        + "\n"
-        + "вложения pdf: "
-        + str(att_files)
+        + "\n\n"
+        + "<i>вложения: </i>"
+        + str(len(attachments))
+        + "\n\n"
+        + att_txt
     )
     return txt

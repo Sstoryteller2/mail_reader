@@ -44,20 +44,19 @@ def main():
                         msg_subj = decode_header(msg["Subject"])[0][0]
                         
                 msg_id = msg["Message-ID"].lstrip("<").rstrip(">")
-                msg_email = msg["Return-path"].lstrip("<").rstrip(">")    
+                msg_email = msg["Return-path"].lstrip("<").rstrip(">")
                 
-                if msg.is_multipart():
+                payload = msg.get_payload()
+                
+                if msg.is_multipart():                    
                     letter_text=functions.get_text_from_multipart(msg)
-                    attachments = functions.get_attaches(msg)
-                    
-                else:
-                    payload = msg.get_payload()
+                    attachments = functions.get_attachments(payload)                    
+                else:                    
                     letter=base64.b64decode(payload).decode()
                     letter_text=functions.get_letter_text(letter)
                 post_text = functions.post_construct(
-                        msg_subj, msg_from, msg_email, letter_text, len(attachments)
-                        )
-                
+                        msg_subj, msg_from, msg_email, letter_text, attachments
+                        )                
                 if len(post_text) > 4000:
                     post_text = post_text[:4000]
                     

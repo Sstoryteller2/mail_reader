@@ -112,44 +112,50 @@ async def send_message(bot_token, message, chat, rpl=None, prv=None):
     await bot._session.close()
     return obj.message_id
 
-def get_letter_text(body):   
-    soup = BeautifulSoup(body, 'html.parser')
-    paragraphs = soup.find_all('div')   
-    text=""
-    for paragraph in paragraphs:
-        text += paragraph.text + "\n"    
-    return text.replace('\xa0', ' ')
+def get_letter_text_from_html(body):
+    try:
+        soup = BeautifulSoup(body, 'html.parser')
+        paragraphs = soup.find_all('div')   
+        text=""
+        for paragraph in paragraphs:
+            text += paragraph.text + "\n"    
+        return text.replace('\xa0', ' ')
+    except (Exception) as exp:
+        print('text ftom html err ', exp)
+        return False
 
-def get_text_from_multipart(msg):
-    payload = msg.get_payload()[0]        
-    if "text/plain" in payload["Content-Type"]:
-        letter_text = (
-            (base64.b64decode(payload.get_payload()).decode())
-            .lstrip()
-            .rstrip()
-        )
-        letter_text = letter_text.replace("<","").replace(">","")
-        return letter_text
-    
-    if "text/html" in payload["Content-Type"]:
+def decode_text(payload):    
+    if payload.get_content_subtype() == 'plain':            
         letter_text = (
             (base64.b64decode(payload.get_payload()).decode())
             .lstrip()
             .rstrip()
         )        
-        letter_text=get_letter_text(letter_text)
+        letter_text = letter_text.replace("<","").replace(">","").replace("\xa0","")
         return letter_text
-        
-    if "multipart" in payload["Content-Type"]:#if msg.is_multipart()
+    if payload.get_content_subtype() == 'html':          
         letter_text = (
-            (
-                base64.b64decode(
-                    payload.get_payload()[0].get_payload()
-                ).decode()
-            )
+            (base64.b64decode(payload.get_payload()).decode())
             .lstrip()
             .rstrip()
-        )
+        )        
+        letter_text=get_letter_text_from_html(letter_text)
+        return letter_text
+    else:
+        return False
+    
+def get_text_from_multipart(payload):
+    for pl in payload: 
+        count=0
+        if pl.is_multipart():            
+            level = pl.get_payload()        
+            for part in level:
+                if part.get_content_maintype() == 'text' and count == 0:         
+                    letter_text = decode_text(part)
+                    count += 1                                        
+        else:        
+            if pl.get_content_maintype() == 'text' and count == 0:           
+                letter_text = decode_text(pl)                     
         return letter_text
 
 def post_construct(msg_subj, msg_from, msg_email, letter_text, attachments):

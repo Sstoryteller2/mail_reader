@@ -49,11 +49,11 @@ def main():
                 payload = msg.get_payload()
                 
                 if msg.is_multipart():                    
-                    letter_text=functions.get_text_from_multipart(msg)
+                    letter_text=functions.get_text_from_multipart(payload)
                     attachments = functions.get_attachments(payload)                    
                 else:                    
                     letter=base64.b64decode(payload).decode()
-                    letter_text=functions.get_letter_text(letter)
+                    letter_text=functions.get_letter_text_from_html(letter)
                 post_text = functions.post_construct(
                         msg_subj, msg_from, msg_email, letter_text, attachments
                         )                

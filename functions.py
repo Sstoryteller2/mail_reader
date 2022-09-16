@@ -133,22 +133,25 @@ def decode_text(payload):
         )        
         letter_text = letter_text.replace("<","").replace(">","").replace("\xa0","")
         return letter_text
-    if payload.get_content_subtype() == 'html':          
-        letter_text = (
-            (base64.b64decode(payload.get_payload()).decode())
-            .lstrip()
-            .rstrip()
-        )        
-        letter_text=get_letter_text_from_html(letter_text)
+    if payload.get_content_subtype() == 'html':
+        try:
+            letter_text = (
+                    (base64.b64decode(payload.get_payload()).decode())
+                    .lstrip()
+                    .rstrip()
+                    )        
+            letter_text=get_letter_text_from_html(letter_text)
+        except:
+            letter_text = get_letter_text_from_html(payload.get_payload())
         return letter_text
     else:
         return False
     
 def get_text_from_multipart(payload):
-    for pl in payload: 
+    for pl in payload:         
         count=0
         if pl.is_multipart():            
-            level = pl.get_payload()        
+            level = pl.get_payload()
             for part in level:
                 if part.get_content_maintype() == 'text' and count == 0:         
                     letter_text = decode_text(part)

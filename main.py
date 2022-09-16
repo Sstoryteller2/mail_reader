@@ -8,7 +8,8 @@ from email.header import decode_header
 import base64
 import sys
 import time
-import asyncio     
+import asyncio   
+import traceback
 
 def main():
     imap = functions.connection()
@@ -48,7 +49,7 @@ def main():
                 
                 payload = msg.get_payload()
                 
-                if msg.is_multipart():                    
+                if msg.is_multipart():
                     letter_text=functions.get_text_from_multipart(payload)
                     attachments = functions.get_attachments(payload)                    
                 else:                    
@@ -75,6 +76,7 @@ if __name__ == "__main__":
         main()
     except (Exception) as exp:        
         text=str("ошибка: " + str(exp))
+        print(traceback.format_exc())
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
                 functions.send_message(config.bot_key, text, config.chat_id)

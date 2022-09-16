@@ -39,8 +39,7 @@ def main():
                     msg_subj = decode_header(msg["Subject"])[0][0].decode()
                 except:
                     msg_from = decode_header(msg["From"])
-                    msg_from = msg_from[0][0].decode()
-                    print(msg_from)
+                    msg_from = msg_from[0][0].decode()                    
                     msg_subj = msg["Subject"]
                     if msg_subj != None:
                         msg_subj = decode_header(msg["Subject"])[0][0]

@@ -64,7 +64,7 @@ def date_parse(msg_date):
 
 async def send_message(bot_token, message, chat, rpl=None, prv=None):
     bot = Bot(token=bot_token)
-    #await bot.get_session()
+    await bot.get_session()
     obj = await bot.send_message(
         chat_id=chat,
         text=message,

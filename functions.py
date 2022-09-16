@@ -95,7 +95,7 @@ def decode_text(payload):
         letter_text = (
             (base64.b64decode(payload.get_payload()).decode()).lstrip().rstrip()
         )
-        letter_text = letter_text.replace("<", "").replace(">", "").replace("\xa0", "")
+        letter_text = letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
         return letter_text
     if payload.get_content_subtype() == "html":
         try:

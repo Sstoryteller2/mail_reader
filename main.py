@@ -30,8 +30,8 @@ def main():
                 msg_date = email.utils.parsedate_tz(msg["Date"])
                 msg_date = functions.date_parse(msg_date)
 
-                msg_from = decode_header(msg["From"])
                 try:
+                    msg_from = decode_header(msg["From"])
                     if type(msg_from[0][0]) == type("str"):
                         msg_from = str(msg_from[0][0]).strip("<>").replace("<", "")
                     else:
@@ -39,11 +39,14 @@ def main():
                     msg_subj = decode_header(msg["Subject"])[0][0].decode()
                 except:
                     msg_from = decode_header(msg["From"])
-                    msg_from = msg_from[0][0].decode()                    
+                    try:
+                        msg_from = msg_from[0][0].decode()
+                    except:
+                        msg_from = msg_from[0][0]                    
                     msg_subj = msg["Subject"]
                     if msg_subj != None:
                         msg_subj = decode_header(msg["Subject"])[0][0]
-
+                msg_from = str(msg_from).strip("<>").replace("<", "")
                 msg_id = msg["Message-ID"].lstrip("<").rstrip(">")
                 msg_email = msg["Return-path"].lstrip("<").rstrip(">")
 

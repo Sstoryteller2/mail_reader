@@ -92,9 +92,12 @@ def get_letter_text_from_html(body):
 
 def decode_text(payload):
     if payload.get_content_subtype() == "plain":
-        letter_text = (
-            (base64.b64decode(payload.get_payload()).decode()).lstrip().rstrip()
-        )
+        try:
+            letter_text = (
+                    (base64.b64decode(payload.get_payload()).decode()).lstrip().rstrip()
+                    )
+        except:
+            letter_text = payload.get_payload()
         letter_text = letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
         return letter_text
     if payload.get_content_subtype() == "html":

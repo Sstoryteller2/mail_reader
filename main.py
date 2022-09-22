@@ -33,6 +33,14 @@ def main():
                 msg_subj = functions.from_subj_decode(msg["Subject"])
                 msg_id = msg["Message-ID"].lstrip("<").rstrip(">")
                 msg_email = msg["Return-path"].lstrip("<").rstrip(">")
+                if not msg_email:
+                    msg_email = (
+                        decode_header(msg["From"])[1][0]
+                        .decode()
+                        .replace("<", "")
+                        .replace(">", "")
+                        .replace(" ", "")
+                    )
 
                 letter_text = functions.get_letter_text(msg)
                 attachments = functions.get_attachments(msg)

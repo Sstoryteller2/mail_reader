@@ -27,36 +27,16 @@ def main():
             res, msg = imap.uid("fetch", letter, "(RFC822)")
             if res == "OK":
                 msg = email.message_from_bytes(msg[0][1])
-                msg_date = email.utils.parsedate_tz(msg["Date"])
-                msg_date = functions.date_parse(msg_date)
 
-                try:
-                    msg_from = decode_header(msg["From"])
-                    if type(msg_from[0][0]) == type("str"):
-                        msg_from = str(msg_from[0][0]).strip("<>").replace("<", "")
-                    else:
-                        msg_from = decode_header(msg["From"])[0][0].decode()
-                    msg_subj = decode_header(msg["Subject"])[0][0].decode()
-                except:
-                    msg_from = decode_header(msg["From"])
-                    try:
-                        msg_from = msg_from[0][0].decode()
-                    except:
-                        msg_from = msg_from[0][0]                    
-                    msg_subj = msg["Subject"]
-                    if msg_subj != None:
-                        msg_subj = decode_header(msg["Subject"])[0][0]
-                msg_from = str(msg_from).strip("<>").replace("<", "")
+                msg_date = functions.date_parse(email.utils.parsedate_tz(msg["Date"]))
+                msg_from = functions.from_subj_decode(msg["From"])
+                msg_subj = functions.from_subj_decode(msg["Subject"])
                 msg_id = msg["Message-ID"].lstrip("<").rstrip(">")
                 msg_email = msg["Return-path"].lstrip("<").rstrip(">")
 
-                if msg.is_multipart():
-                    letter_text = functions.get_text_from_multipart(msg)
-                    attachments = functions.get_attachments(msg)
-                else:
-                    payload = msg.get_payload()
-                    letter = base64.b64decode(payload).decode()
-                    letter_text = functions.get_letter_text_from_html(letter)
+                letter_text = functions.get_letter_text(msg)
+                attachments = functions.get_attachments(msg)
+
                 post_text = functions.post_construct(
                     msg_subj, msg_from, msg_email, letter_text, attachments
                 )

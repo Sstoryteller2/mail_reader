@@ -62,6 +62,19 @@ def date_parse(msg_date):
     return dt_obj
 
 
+def from_subj_decode(msg_from_subj):
+    if msg_from_subj:
+        msg_from_subj = decode_header(msg_from_subj)[0][0]
+        if isinstance(msg_from_subj, bytes):
+            msg_from_subj = msg_from_subj.decode()
+        if isinstance(msg_from_subj, str):
+            pass
+        msg_from_subj = str(msg_from_subj).strip("<>").replace("<", "")
+        return msg_from_subj
+    else:
+        return None
+
+
 async def send_message(bot_token, message, chat, rpl=None, prv=None):
     bot = Bot(token=bot_token)
     await bot.get_session()
@@ -90,33 +103,39 @@ def get_letter_text_from_html(body):
         return False
 
 
-def decode_text(payload):
-    if payload.get_content_subtype() == "plain":
-        letter_text = (
-            (base64.b64decode(payload.get_payload()).decode()).lstrip().rstrip()
-        )
-        letter_text = letter_text.replace("<", "").replace(">", "").replace("\xa0", "")
-        return letter_text
-    if payload.get_content_subtype() == "html":
-        try:
-            letter_text = (
-                (base64.b64decode(payload.get_payload()).decode()).lstrip().rstrip()
-            )
-            letter_text = get_letter_text_from_html(letter_text)
-        except:
-            letter_text = get_letter_text_from_html(payload.get_payload())
-        return letter_text
+def letter_type(part):
+    if part["Content-Transfer-Encoding"] in (None, "7bit", "8bit", "binary"):
+        return part.get_payload()
+    if part["Content-Transfer-Encoding"] == "base64":
+        return base64.b64decode(part.get_payload()).decode()
+    else:  # all possible types: quoted-printable, base64, 7bit, 8bit, and binary
+        return part.get_payload()
+
+
+def get_letter_text(msg):
+    if msg.is_multipart():
+        for part in msg.walk():
+            count = 0
+            if part.get_content_maintype() == "text" and count == 0:
+                extract_part = letter_type(part)
+                if part.get_content_subtype() == "html":
+                    letter_text = get_letter_text_from_html(extract_part)
+                else:
+                    letter_text = extract_part
+                count += 1
+                return (
+                    letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
+                )
     else:
-        return False
-
-
-def get_text_from_multipart(msg):
-    for part in msg.walk():
         count = 0
-        if part.get_content_maintype() == "text" and count == 0:
-            letter_text = decode_text(part)
+        if msg.get_content_maintype() == "text" and count == 0:
+            extract_part = letter_type(msg)
+            if msg.get_content_subtype() == "html":
+                letter_text = get_letter_text_from_html(extract_part)
+            else:
+                letter_text = extract_part
             count += 1
-            return letter_text
+            return letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
 
 
 def post_construct(msg_subj, msg_from, msg_email, letter_text, attachments):

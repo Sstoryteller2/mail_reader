@@ -9,6 +9,7 @@ import config
 from bs4 import BeautifulSoup
 from aiogram import Bot, Dispatcher, executor, types
 import aiohttp
+import asyncio
 
 
 def connection():
@@ -85,6 +86,18 @@ async def send_message(bot_token, message, chat, rpl=None, prv=None):
         reply_to_message_id=rpl,
         disable_web_page_preview=prv,
     )
+    await asyncio.sleep(3)
+    await bot._session.close()
+    return obj.message_id
+
+
+async def send_document(document, filename, caption=None, prv=None, rpl=None):
+    bot = Bot(token=config.bot_key)
+    await bot.get_session()
+    obj = await bot.send_document(
+        config.chat_id, (filename, document), caption=caption, reply_to_message_id=rpl
+    )
+    await asyncio.sleep(2)
     await bot._session.close()
     return obj.message_id
 
@@ -136,6 +149,19 @@ def get_letter_text(msg):
                 letter_text = extract_part
             count += 1
             return letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
+
+
+def send_attach(msg, msg_subj, repl):
+    for part in msg.walk():
+        if part.get_content_disposition() == "attachment":
+            filename = part.get_filename()
+            filename = from_subj_decode(filename)
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(
+                send_document(
+                    part.get_payload(decode=True), filename, caption=msg_subj, rpl=repl
+                )
+            )
 
 
 def post_construct(msg_subj, msg_from, msg_email, letter_text, attachments):

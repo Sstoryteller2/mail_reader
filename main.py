@@ -52,9 +52,11 @@ def main():
                     post_text = post_text[:4000]
 
                 loop = asyncio.get_event_loop()
-                loop.run_until_complete(
+                reply_id = loop.run_until_complete(
                     functions.send_message(config.bot_key, post_text, config.chat_id)
                 )
+                if config.send_attach:
+                    functions.send_attach(msg, msg_subj, reply_id)
         imap.logout()
     else:
         imap.logout()

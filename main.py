@@ -51,8 +51,10 @@ def main():
                 )
                 if len(post_text) > 4000:
                     post_text = post_text[:4000]
-
-                loop = asyncio.get_event_loop()
+                
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
                 reply_id = loop.run_until_complete(
                     functions.send_message(config.bot_key, post_text, config.chat_id)
                 )

@@ -16,7 +16,7 @@ ENCODING=config.encoding
 def connection():
     mail_pass = config.mail_pass
     username = config.username
-    imap_server = "imap.mail.ru"
+    imap_server = config.imap_server
     imap = imaplib.IMAP4_SSL(imap_server)
     sts, res = imap.login(username, mail_pass)
     if sts == "OK":
@@ -68,7 +68,7 @@ def from_subj_decode(msg_from_subj):
     if msg_from_subj:
         msg_from_subj = decode_header(msg_from_subj)[0][0]
         if isinstance(msg_from_subj, bytes):
-            msg_from_subj = msg_from_subj.decode()
+            msg_from_subj = msg_from_subj.decode(ENCODING)
         if isinstance(msg_from_subj, str):
             pass
         msg_from_subj = str(msg_from_subj).strip("<>").replace("<", "")
@@ -121,7 +121,7 @@ def letter_type(part):
     if part["Content-Transfer-Encoding"] in (None, "7bit", "8bit", "binary"):
         return part.get_payload()
     if part["Content-Transfer-Encoding"] == "base64":
-        return base64.b64decode(part.get_payload()).decode()
+        return base64.b64decode(part.get_payload()).decode(ENCODING)
     else:  # all possible types: quoted-printable, base64, 7bit, 8bit, and binary
         return part.get_payload()
 

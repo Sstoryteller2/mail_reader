@@ -177,7 +177,7 @@ def send_attach(msg, msg_subj, repl):
 
 
 def post_construct(msg_subj, msg_from, msg_email, letter_text, attachments):
-    att_txt = "".join(attachments)
+    att_txt = "\n".join(attachments)
     postparts = [
         "\U0001F4E8 <b>",
         str(msg_subj),

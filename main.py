@@ -11,6 +11,7 @@ import time
 import asyncio
 import traceback
 
+ENCODING=config.encoding
 
 def main():
     imap = functions.connection()
@@ -19,7 +20,7 @@ def main():
 
     status, messages = imap.select("INBOX")  # папка входящие
     res, unseen_msg = imap.uid("search", "UNSEEN", "ALL")
-    unseen_msg = unseen_msg[0].decode("utf-8").split(" ")
+    unseen_msg = unseen_msg[0].decode(ENCODING).split(" ")
 
     if unseen_msg[0]:
         for letter in unseen_msg:
@@ -36,7 +37,7 @@ def main():
                 if not msg_email:
                     msg_email = (
                         decode_header(msg["From"])[1][0]
-                        .decode()
+                        .decode(ENCODING)
                         .replace("<", "")
                         .replace(">", "")
                         .replace(" ", "")
@@ -50,8 +51,10 @@ def main():
                 )
                 if len(post_text) > 4000:
                     post_text = post_text[:4000]
-
-                loop = asyncio.get_event_loop()
+                
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
                 reply_id = loop.run_until_complete(
                     functions.send_message(config.bot_key, post_text, config.chat_id)
                 )

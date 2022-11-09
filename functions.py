@@ -11,6 +11,7 @@ from aiogram import Bot, Dispatcher, executor, types
 import aiohttp
 import asyncio
 
+ENCODING=config.encoding
 
 def connection():
     mail_pass = config.mail_pass
@@ -28,13 +29,13 @@ def encode_att_names(str_pl):
     enode_name = re.findall("\=\?.*?\?\=", str_pl)
     if len(enode_name) == 1:
         decode_name = decode_header(enode_name[0])[0][0]
-        decode_name = decode_name.decode("utf-8")
+        decode_name = decode_name.decode(ENCODING)
         str_pl = str_pl.replace(enode_name[0], decode_name)
     if len(enode_name) > 1:
         nm = ""
         for part in enode_name:
             decode_name = decode_header(part)[0][0]
-            decode_name = decode_name.decode("utf-8")
+            decode_name = decode_name.decode(ENCODING)
             nm += decode_name
         str_pl = str_pl.replace(enode_name[0], nm)
         for c, i in enumerate(enode_name):
